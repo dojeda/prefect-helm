@@ -1,0 +1,107 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prefect.fullname" . }}-db
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{ include "prefect.labels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: {{ include "prefect.labels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: {{ template "prefect.fullname" . }}-db
+          image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
+          imagePullPolicy: {{ .Values.db.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          resources: {{ toYaml .Values.db.resources | nindent 12 }}
+          {{ if .Values.db.storage.enabled }}
+          volumeMounts:
+            - mountPath: /srv/data
+              name: db-data-volume
+          {{ end }}
+          env:
+            - name: PGDATA
+              value: /srv/data/pgdata
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name:  {{ template "prefect.fullname" . }}-secrets
+                  key: db_username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name:  {{ template "prefect.fullname" . }}-secrets
+                  key: db_password
+            - name: POSTGRES_DB
+              value: {{ .Values.db.database }}
+
+      restartPolicy: Always
+      nodeSelector: {{ toYaml .Values.db.nodeSelector | nindent 8 }}
+      affinity:     {{ toYaml .Values.db.affinity     | nindent 8 }}
+      tolerations:  {{ toYaml .Values.db.tolerations  | nindent 8 }}
+      {{ if .Values.db.storage.enabled }}
+      volumes:
+        - name: db-data-volume
+          persistentVolumeClaim:
+            claimName: {{ template "prefect.fullname" . }}-db-pvc
+      {{ end }}
+
+---
+{{ if .Values.db.storage.enabled }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ template "prefect.fullname" . }}-sc
+  labels: {{ include "prefect.labels" . | nindent 4}}
+    app.kubernetes.io/component: database
+parameters:
+  type: {{ .Values.db.storage.type }}
+provisioner: {{ .Values.db.storage.provisioner }}
+reclaimPolicy: Retain
+volumeBindingMode: {{ .Values.db.storage.volumeBindingMode }}
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "prefect.fullname" . }}-db-pvc
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  storageClassName: {{ template "prefect.fullname" . }}-sc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Gi
+{{ end }}
