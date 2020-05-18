@@ -39,6 +39,31 @@ db:
   username: db_user
   password: db_password
 
+
+# Hasura configuration
+hasura:
+  # Docker image configuration
+  image:
+    repository: hasura/graphql-engine
+    tag: v1.1.0
+    pullPolicy: IfNotPresent
+
+  # Resources for the hasura pod
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+    requests:
+      memory: 64Mi
+      cpu: 250m
+
+  # Misc kubernetes configuration
+  nodeSelector: {}
+  affinity: {}
+  tolerations: {}
+
+
+
 #
 #replicaCount: 1
 #
