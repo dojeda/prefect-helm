@@ -1,0 +1,176 @@
+{{ if .Values.agents.k8s.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prefect.fullname" . }}-k8s-agent
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: k8s-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{ include "prefect.labels" . | nindent 6 }}
+      app.kubernetes.io/component: k8s-agent
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: {{ include "prefect.labels" . | nindent 8 }}
+        app.kubernetes.io/component: k8s-agent
+    spec:
+      containers:
+        - name: k8s-agent
+          image: "{{ .Values.agents.k8s.image.repository }}:{{ .Values.agents.k8s.image.tag }}"
+          imagePullPolicy: {{ .Values.agents.k8s.image.pullPolicy }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - "prefect agent start -v kubernetes"
+          resources: {{ toYaml .Values.agents.k8s.resources | nindent 12 }}
+          env:
+          - name: PREFECT__CLOUD__AGENT__AUTH_TOKEN
+            value: ''
+          - name: PREFECT__CLOUD__API
+            value: "http://apollo:4200"
+          - name: NAMESPACE
+            value: default
+          - name: IMAGE_PULL_SECRETS
+            value: ''
+          - name: PREFECT__CLOUD__AGENT__LABELS
+            value: '[]'
+          - name: JOB_MEM_REQUEST
+            value: ''
+          - name: JOB_MEM_LIMIT
+            value: ''
+          - name: JOB_CPU_REQUEST
+            value: ''
+          - name: JOB_CPU_LIMIT
+            value: ''
+          - name: PREFECT__BACKEND
+            value: server
+          - name: PREFECT__CLOUD__AGENT__AGENT_ADDRESS
+            value: http://127.0.0.1:8080
+{{/*        ports:*/}}
+{{/*          - name: liveness-port*/}}
+{{/*            containerPort: 8080*/}}
+{{/*            hostPort: 8080*/}}
+{{/*        livenessProbe:*/}}
+{{/*          failureThreshold: 2*/}}
+{{/*          httpGet:*/}}
+{{/*            path: /api/health*/}}
+{{/*            port: liveness-port*/}}
+{{/*          initialDelaySeconds: 40*/}}
+{{/*          periodSeconds: 40*/}}
+
+        {{ if .Values.agents.k8s.resourceManagerEnabled }}
+        - name: resource-manager
+          image: "{{ .Values.agents.k8s.image.repository }}:{{ .Values.agents.k8s.image.tag }}"
+          imagePullPolicy: {{ .Values.agents.k8s.image.pullPolicy }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - "python"
+            - "-c"
+            - "from prefect.agent.kubernetes import ResourceManager; ResourceManager().start()"
+          env:
+            - name: PREFECT__CLOUD__AGENT__AUTH_TOKEN
+              value: ""
+            - name: PREFECT__CLOUD__API
+              value: "https://apollo:4200"
+            - name: PREFECT__CLOUD__AGENT__RESOURCE_MANAGER__LOOP_INTERVAL
+              value: "60"
+            - name: PREFECT__BACKEND
+              value: server
+            - name: NAMESPACE
+              value: "default"
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 100m
+        {{ end }}
+
+      restartPolicy: Always
+      nodeSelector: {{ toYaml .Values.agents.k8s.nodeSelector | nindent 8 }}
+      affinity:     {{ toYaml .Values.agents.k8s.affinity     | nindent 8 }}
+      tolerations:  {{ toYaml .Values.agents.k8s.tolerations  | nindent 8 }}
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: prefect-agent-rbac
+rules:
+- apiGroups: ["batch", "extensions"]
+  resources: ["jobs"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["*"]
+
+---
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: daskKubernetes
+rules:
+- apiGroups:
+  - ""  # indicates the core API group
+  resources:
+  - "pods"
+  verbs:
+  - "get"
+  - "list"
+  - "watch"
+  - "create"
+  - "delete"
+- apiGroups:
+  - ""  # indicates the core API group
+  resources:
+  - "pods/log"
+  verbs:
+  - "get"
+  - "list"
+- apiGroups:
+  - "" # indicates the core API group
+  resources:
+  - "services"
+  verbs:
+  - "get"
+  - "list"
+  - "watch"
+  - "create"
+  - "delete"
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  namespace: default
+  name: prefect-agent-rbac
+subjects:
+  - kind: ServiceAccount
+    name: default
+roleRef:
+  kind: Role
+  name: prefect-agent-rbac
+  apiGroup: rbac.authorization.k8s.io
+
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  namespace: default
+  name: daskKubernetes
+subjects:
+  - kind: ServiceAccount
+    name: default
+roleRef:
+  kind: Role
+  name: daskKubernetes
+  apiGroup: rbac.authorization.k8s.io
+
+{{ end }}

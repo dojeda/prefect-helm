@@ -158,6 +158,37 @@ ui:
   tolerations: []
 
 
+# Agents configuration
+agents:
+  # Kubernetes agent
+  # https://docs.prefect.io/orchestration/agents/kubernetes.html
+  k8s:
+    # Disable if needed with this variable
+    enabled: true
+    # Disable if you don't want the resource manager to clean jobs / pods
+    resourceManagerEnabled: true
+
+    # Docker image configuration
+    image:
+      repository: prefecthq/prefect
+      tag: 0.10.7-python3.8
+      pullPolicy: IfNotPresent
+
+    # Resources for the agent container
+    resources:
+      limits:
+        memory: 128Mi
+        cpu: 250m
+      requests:
+        memory: 64Mi
+        cpu: 100m
+
+    # Misc kubernetes configuration
+    nodeSelector: {}
+    affinity: {}
+    tolerations: []
+
+
 #
 #replicaCount: 1
 #

@@ -16,7 +16,23 @@ To learn more about the release, try:
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}
 
-You can now deploy flows to this prefect server, but you will need to:
+========
+Database
+========
+
+Your flows, flow runs, task runs, etc. are saved in a database.
+{{ if .Values.db.storage.enabled }}
+This database is persistent in a volume by {{ .Values.db.storage.provisioner }}.
+{{ else }}
+This database is NOT persistent, which means that if the database deployment
+is killed for some reason, you will lose your registered flows, runs, etc.
+{{ end }}
+
+=================
+Registering flows
+=================
+
+Before you can register flows to this prefect server, you will need to:
 
 1. Switch to a server backend with:
 
@@ -25,6 +41,14 @@ You can now deploy flows to this prefect server, but you will need to:
 2. Setup port forwarding to access this cluster's apollo service:
 
   $ kubectl port-forward service/apollo 4200
+
+After these two steps, you will be able to do `flow.register()` on your code.
+See https://docs.prefect.io/orchestration/concepts/flows.html#registration
+for more information
+
+==============
+User-interface
+==============
 
 {{ if .Values.ui.externalURL }}
 You have defined an external URL for the prefect UI at:
@@ -43,4 +67,18 @@ Don't forget to ALSO run the apollo port-forward for port 4200
 
 You will find the UI at https://localhost:8080
 
+{{ end }}
+
+=============
+Running flows
+=============
+
+Running flows require an agent.
+{{ if .Values.agents.k8s.enabled }}
+You have enabled the kubernetes agent. Everything is ready for flow execution!
+{{ else }}
+You do not have an agent installed on this cluster. You can install an agent in
+you local premises or enable a kubernetes agent with the `agents.k8s` option of
+this chart.
+Until you add an agent, flows in this prefect server will not be executed.
 {{ end }}
