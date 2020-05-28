@@ -108,6 +108,28 @@ apollo:
   tolerations: []
 
 
+# Scheduler configuration
+scheduler:
+  # Docker image configuration
+  image:
+    repository: prefecthq/server
+    tag: 0.10.7
+    pullPolicy: IfNotPresent
+
+  # Resources for the pod
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+    requests:
+      memory: 64Mi
+      cpu: 250m
+
+  # Misc kubernetes configuration
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+
 
 #
 #replicaCount: 1

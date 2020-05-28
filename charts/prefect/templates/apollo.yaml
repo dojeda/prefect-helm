@@ -23,6 +23,7 @@ metadata:
   labels: {{ include "prefect.labels" . | nindent 4 }}
     app.kubernetes.io/component: apollo
 spec:
+  replicas: 1
   selector:
     matchLabels: {{ include "prefect.labels" . | nindent 6 }}
       app.kubernetes.io/component: apollo

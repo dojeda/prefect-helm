@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prefect.fullname" . }}-scheduler
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{ include "prefect.labels" . | nindent 6 }}
+      app.kubernetes.io/component: scheduler
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: {{ include "prefect.labels" . | nindent 8 }}
+        app.kubernetes.io/component: scheduler
+    spec:
+      containers:
+        - name: {{ template "prefect.fullname" . }}-scheduler
+          image: "{{ .Values.scheduler.image.repository }}:{{ .Values.scheduler.image.tag }}"
+          imagePullPolicy: {{ .Values.scheduler.image.pullPolicy }}
+          command:
+            - "python"
+            - "src/prefect_server/services/scheduler/scheduler.py"
+          resources: {{ toYaml .Values.scheduler.resources | nindent 12 }}
+          env:
+            - name: PREFECT_SERVER__HASURA__ADMIN_SECRET
+              value: "hasura-secret-admin-secret"
+            - name: PREFECT_SERVER__HASURA__HOST
+              value: hasura
+      restartPolicy: Always
+      nodeSelector: {{ toYaml .Values.scheduler.nodeSelector | nindent 8 }}
+      affinity:     {{ toYaml .Values.scheduler.affinity     | nindent 8 }}
+      tolerations:  {{ toYaml .Values.scheduler.tolerations  | nindent 8 }}
