@@ -35,7 +35,7 @@ spec:
         app.kubernetes.io/component: hasura
     spec:
       containers:
-        - name: {{ template "prefect.fullname" . }}-db
+        - name: {{ template "prefect.fullname" . }}-hasura
           image: "{{ .Values.hasura.image.repository }}:{{ .Values.hasura.image.tag }}"
           imagePullPolicy: {{ .Values.hasura.image.pullPolicy }}
           ports:

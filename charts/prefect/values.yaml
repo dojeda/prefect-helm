@@ -60,7 +60,7 @@ hasura:
   # Misc kubernetes configuration
   nodeSelector: {}
   affinity: {}
-  tolerations: {}
+  tolerations: []
 
 
 
