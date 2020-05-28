@@ -38,6 +38,10 @@ spec:
         - name: {{ template "prefect.fullname" . }}-graphql
           image: "{{ .Values.graphql.image.repository }}:{{ .Values.graphql.image.tag }}"
           imagePullPolicy: {{ .Values.graphql.image.pullPolicy }}
+          command:
+            - "bash"
+            - "-c"
+            - "$(PREFECT_SERVER_DB_CMD) && python src/prefect_server/services/graphql/server.py"
           ports:
             - name: graphql
               containerPort: 4201
@@ -64,6 +68,14 @@ spec:
               value: "3000"
             - name: HASURA_GRAPHQL_QUERY_PLAN_CACHE_SIZE
               value: "100"
+            - name: PREFECT_SERVER_DB_CMD
+              value: "prefect-server database upgrade -y"
+            - name: PREFECT_SERVER__DATABASE__CONNECTION_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/{{ .Values.db.database }}"
+            - name: PREFECT_SERVER__HASURA__ADMIN_SECRET
+              value: "hasura-secret-admin-secret"
+            - name: PREFECT_SERVER__HASURA__HOST
+              value: hasura
       restartPolicy: Always
       nodeSelector: {{ toYaml .Values.graphql.nodeSelector | nindent 8 }}
       affinity:     {{ toYaml .Values.graphql.affinity     | nindent 8 }}
