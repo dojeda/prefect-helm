@@ -1,0 +1,58 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apollo
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: apollo
+spec:
+  type: ClusterIP
+  ports:
+    - name: apollo
+      port: 4200
+      targetPort: 4200
+      protocol: TCP
+  selector: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: apollo
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prefect.fullname" . }}-apollo
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: apollo
+spec:
+  selector:
+    matchLabels: {{ include "prefect.labels" . | nindent 6 }}
+      app.kubernetes.io/component: apollo
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: {{ include "prefect.labels" . | nindent 8 }}
+        app.kubernetes.io/component: apollo
+    spec:
+      containers:
+        - name: {{ template "prefect.fullname" . }}-apollo
+          image: "{{ .Values.apollo.image.repository }}:{{ .Values.apollo.image.tag}}"
+          imagePullPolicy: {{ .Values.apollo.image.pullPolicy }}
+          command: ["npm", "run", "serve"]
+          ports:
+            - name: apollo
+              containerPort: 4200
+              protocol: TCP
+          resources: {{ toYaml .Values.apollo.resources | nindent 12 }}
+          env:
+            - name: HASURA_API_URL
+              value: "http://hasura:3000/v1alpha1/graphql"
+            - name: PREFECT_API_URL
+              value: "http://graphql:4201/graphql/"
+            - name: PREFECT_API_HEALTH_URL
+              value: "http://graphql:4201/health"
+      restartPolicy: Always
+      nodeSelector: {{ toYaml .Values.apollo.nodeSelector | nindent 8 }}
+      affinity:     {{ toYaml .Values.apollo.affinity     | nindent 8 }}
+      tolerations:  {{ toYaml .Values.apollo.tolerations  | nindent 8 }}
+
+

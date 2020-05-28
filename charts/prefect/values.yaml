@@ -70,7 +70,7 @@ graphql:
     tag: 0.11.1
     pullPolicy: IfNotPresent
 
-  # Resources for the hasura pod
+  # Resources for the graphql pod
   resources:
     limits:
       memory: 1Gi
@@ -85,10 +85,28 @@ graphql:
   tolerations: []
 
 
+# Apollo configuration
+apollo:
+  # Docker image configuration
+  image:
+    repository: prefecthq/apollo
+    tag: 0.10.7
+    pullPolicy: IfNotPresent
 
-# Docker image configuration
-# Resources for the hasura pod
-# Misc kubernetes configuration
+  # Resources for the pod
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+    requests:
+      memory: 64Mi
+      cpu: 250m
+
+  # Misc kubernetes configuration
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+
 
 
 #

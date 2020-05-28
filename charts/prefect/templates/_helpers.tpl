@@ -35,6 +35,7 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "prefect.labels" -}}
+app: {{ include "prefect.name" . }}
 helm.sh/chart: {{ include "prefect.chart" . }}
 {{ include "prefect.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
