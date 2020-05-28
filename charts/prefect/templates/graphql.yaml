@@ -1,0 +1,70 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: graphql
+spec:
+  type: ClusterIP
+  ports:
+    - name: graphql
+      port: 4201
+      targetPort: 4201
+      protocol: TCP
+  selector: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: graphql
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prefect.fullname" . }}-graphql
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: graphql
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{ include "prefect.labels" . | nindent 6 }}
+      app.kubernetes.io/component: graphql
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: {{ include "prefect.labels" . | nindent 8 }}
+        app.kubernetes.io/component: graphql
+    spec:
+      containers:
+        - name: {{ template "prefect.fullname" . }}-graphql
+          image: "{{ .Values.graphql.image.repository }}:{{ .Values.graphql.image.tag }}"
+          imagePullPolicy: {{ .Values.graphql.image.pullPolicy }}
+          ports:
+            - name: graphql
+              containerPort: 4201
+              protocol: TCP
+          resources: {{ toYaml .Values.graphql.resources | nindent 12 }}
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prefect.fullname" . }}-secrets
+                  key: db_username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "prefect.fullname" . }}-secrets
+                  key: db_password
+            - name: POSTGRES_DB
+              value: {{ .Values.db.database }}
+            - name: HASURA_GRAPHQL_DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/{{ .Values.db.database }}"
+            - name: HASURA_GRAPHQL_ENABLE_CONSOLE
+              value: "true"
+            - name: HASURA_GRAPHQL_SERVER_PORT
+              value: "3000"
+            - name: HASURA_GRAPHQL_QUERY_PLAN_CACHE_SIZE
+              value: "100"
+      restartPolicy: Always
+      nodeSelector: {{ toYaml .Values.graphql.nodeSelector | nindent 8 }}
+      affinity:     {{ toYaml .Values.graphql.affinity     | nindent 8 }}
+      tolerations:  {{ toYaml .Values.graphql.tolerations  | nindent 8 }}

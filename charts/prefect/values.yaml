@@ -62,6 +62,33 @@ hasura:
   affinity: {}
   tolerations: []
 
+# GraphQL configuration
+graphql:
+  # Docker image configuration
+  image:
+    repository: prefecthq/server
+    tag: 0.11.1
+    pullPolicy: IfNotPresent
+
+  # Resources for the hasura pod
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+    requests:
+      memory: 64Mi
+      cpu: 250m
+
+  # Misc kubernetes configuration
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+
+
+
+# Docker image configuration
+# Resources for the hasura pod
+# Misc kubernetes configuration
 
 
 #
