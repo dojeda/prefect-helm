@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres
+  name: hasura
   labels: {{ include "prefect.labels" . | nindent 4 }}
     app.kubernetes.io/component: hasura
 spec:
@@ -19,7 +19,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "prefect.fullname" . }}-db
+  name: {{ template "prefect.fullname" . }}-hasura
   labels: {{ include "prefect.labels" . | nindent 4 }}
     app.kubernetes.io/component: hasura
 spec:
