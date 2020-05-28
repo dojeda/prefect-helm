@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ui
+spec:
+  type: ClusterIP
+  ports:
+    - name: ui
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ui
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prefect.fullname" . }}-ui
+  labels: {{ include "prefect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{ include "prefect.labels" . | nindent 6 }}
+      app.kubernetes.io/component: ui
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: {{ include "prefect.labels" . | nindent 8 }}
+        app.kubernetes.io/component: ui
+    spec:
+      containers:
+        - name: {{ template "prefect.fullname" . }}-ui
+          image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+          imagePullPolicy: {{ .Values.ui.image.pullPolicy }}
+          command: ["./intercept.sh"]
+          ports:
+            - name: ui
+              containerPort: 8080
+              protocol: TCP
+          resources: {{ toYaml .Values.ui.resources | nindent 12 }}
+          env:
+            - name: PREFECT_SERVER__GRAPHQL_URL
+              value: {{ .Values.ui.externalURL | default "https://localhost:8080" }}
+

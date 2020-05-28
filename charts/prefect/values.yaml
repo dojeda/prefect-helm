@@ -20,7 +20,7 @@ db:
     tag: 11.7
     pullPolicy: IfNotPresent
 
-  # Resources for the database pod
+  # Resources for the database container
   resources:
     limits:
       memory: 2Gi
@@ -48,7 +48,7 @@ hasura:
     tag: v1.1.0
     pullPolicy: IfNotPresent
 
-  # Resources for the hasura pod
+  # Resources for the hasura container
   resources:
     limits:
       memory: 1Gi
@@ -70,7 +70,7 @@ graphql:
     tag: 0.11.1
     pullPolicy: IfNotPresent
 
-  # Resources for the graphql pod
+  # Resources for the graphql container
   resources:
     limits:
       memory: 1Gi
@@ -93,7 +93,7 @@ apollo:
     tag: 0.10.7
     pullPolicy: IfNotPresent
 
-  # Resources for the pod
+  # Resources for the apollo container
   resources:
     limits:
       memory: 1Gi
@@ -116,7 +116,34 @@ scheduler:
     tag: 0.10.7
     pullPolicy: IfNotPresent
 
-  # Resources for the pod
+  # Resources for the scheduler container
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+    requests:
+      memory: 64Mi
+      cpu: 250m
+
+  # Misc kubernetes configuration
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+
+
+# UI configuration
+ui:
+  # Set this URL if you want to expose the UI to the external world through
+  # a secure proxy like pomerium
+  # externalURL: https://example.com
+
+  # Docker image configuration
+  image:
+    repository: prefecthq/ui
+    tag: 0.10.7
+    pullPolicy: IfNotPresent
+
+  # Resources for the ui container
   resources:
     limits:
       memory: 1Gi

@@ -6,3 +6,41 @@ ______          __          _          _          _
 | |  | | |  __/ ||  __/ (__| |_       | | | |  __/ | | | | | |
 \_|  |_|  \___|_| \___|\___|\__|      |_| |_|\___|_|_| |_| |_|
 ==============================================================
+
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+You can now deploy flows to this prefect server, but you will need to:
+
+1. Switch to a server backend with:
+
+  $ prefect backend server
+
+2. Setup port forwarding to access this cluster's apollo service:
+
+  $ kubectl port-forward service/apollo 4200
+
+{{ if .Values.ui.externalURL }}
+You have defined an external URL for the prefect UI at:
+{{ .Values.ui.externalURL }}
+
+This helm chart assumes that you have setup some ingress or proxy to handle
+that URL and redirect it to the appropriate UI web server and apollo server.
+
+{{ else }}
+You have not defined an external URL for the prefect UI. If you want to use the
+UI you need to run an additional port forwarding:
+
+  $ kubect port-forward service/ui 8080
+
+Don't forget to ALSO run the apollo port-forward for port 4200
+
+You will find the UI at https://localhost:8080
+
+{{ end }}
