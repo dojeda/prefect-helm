@@ -46,4 +46,4 @@ spec:
           resources: {{ toYaml .Values.ui.resources | nindent 12 }}
           env:
             - name: PREFECT_SERVER__GRAPHQL_URL
-              value: {{ .Values.ui.externalURL | default "https://localhost:8080" }}
+              value: "{{ .Values.ui.externalURL | default "http://localhost:4200" }}/graphql"

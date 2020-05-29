@@ -65,7 +65,7 @@ UI you need to run an additional port forwarding:
 
 Don't forget to ALSO run the apollo port-forward for port 4200
 
-You will find the UI at https://localhost:8080
+You will find the UI at http://localhost:8080
 
 {{ end }}
 
