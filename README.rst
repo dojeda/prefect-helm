@@ -90,7 +90,7 @@ The procedure is as follows:
         - from: "https://ui.example.com"
           to: "http://example.default.svc.cluster.local:8080"
           allowed_domains:
-            - "omind.me"                                             # IMPORTANT
+            - "my-company.com"                                             # IMPORTANT
 
     authenticate:
       idp:
